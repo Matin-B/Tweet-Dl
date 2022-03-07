@@ -50,7 +50,6 @@ def extract_text(data: dict) -> dict:
             - owner_username: the username of the user who posted the tweet
             - owner_name: the name of the user who posted the tweet
     """
-    type_name = "text"
     tweet_id_str = data.get("id_str")
     created_at = data.get("created_at")
     owner_username = data.get("user").get("screen_name")
@@ -63,7 +62,7 @@ def extract_text(data: dict) -> dict:
     tweet_url = f"https://twitter.com/{owner_username}/status/{tweet_id_str}"
     return {
         "status": True,
-        "type_name": type_name,
+        "type_name": "text",
         "data": {
             "tweet_text": tweet_text,
             "tweet_url": tweet_url,
@@ -79,7 +78,55 @@ def extract_video(data: dict) -> dict:
 
 
 def extract_photos(data: dict) -> dict:
-    pass
+    """
+    Extract Tweet data
+    
+    :param data: The data that you want to extract the photo from
+    :type data: dict
+
+    :return: A dictionary with the following keys:
+        - status: True or False, depending on whether the tweet was successfully extracted
+        - type_name: "album"
+        - data: a dictionary with the following keys:
+            - tweet_text: the text of the tweet
+            - created_at: the date of tweet created (UTC time)
+            - tweet_url: the url of the tweet
+            - photo_count: the number of photos in the album
+            - photo_urls: a list of urls of the photos in the album
+            - owner_username: the username of the user who posted the tweet
+            - owner_name: the name of the user who posted the tweet
+    """
+    photos = data.get("photos")
+    photo_count = len(photos)
+    photo_urls = []
+    for photo in photos:
+        photo_urls.append(
+            photo.get("url") + "?name=large"
+        )
+
+    tweet_id_str = data.get("id_str")
+    created_at = data.get("created_at")
+    owner_username = data.get("user").get("screen_name")
+    owner_name = data.get("user").get("name")
+
+    tweet_text = data.get("text")
+    entities = data.get("entities")
+    tweet_text = edit_tweet_text(tweet_text, entities)
+
+    tweet_url = f"https://twitter.com/{owner_username}/status/{tweet_id_str}"
+    return {
+        "status": True,
+        "type_name": "album",
+        "data": {
+            "tweet_text": tweet_text,
+            "created_at": created_at,
+            "tweet_url": tweet_url,
+            "photo_count": photo_count,
+            "photo_urls": photo_urls,
+            "owner_username": owner_username,
+            "owner_name": owner_name,
+        }
+    }
 
 
 def extract_photo(data: dict) -> dict:
@@ -103,7 +150,6 @@ def extract_photo(data: dict) -> dict:
     photos = data.get("photos")
     if len(photos) >= 1:
         extract_photos(data)
-    type_name = "photo"
     photo_url = photos[0].get("url") + "?name=large"
 
     tweet_id_str = data.get("id_str")
@@ -118,7 +164,7 @@ def extract_photo(data: dict) -> dict:
     tweet_url = f"https://twitter.com/{owner_username}/status/{tweet_id_str}"
     return {
         "status": True,
-        "type_name": type_name,
+        "type_name": "photo",
         "data": {
             "tweet_text": tweet_text,
             "created_at": created_at,
