@@ -21,17 +21,57 @@ def edit_tweet_text(tweet_text: str, entities: dict) -> str:
 
     :return: The tweet text with the media url removed.
     """
-    media_url = entities.get("media")[0].get("url")
     urls = entities.get("urls")
     for url in urls:
         expanded_url = url.get("expanded_url")
         shorted_url = url.get("url")
         tweet_text = tweet_text.replace(shorted_url, expanded_url)
-    return tweet_text.replace(f" {media_url}", "")
+    try:
+        media_url = entities.get("media")[0].get("url")
+        return tweet_text.replace(f" {media_url}", "")
+    except TypeError:
+        return tweet_text
 
 
 def extract_text(data: dict) -> dict:
-    pass
+    """
+    Extract Tweet data
+    
+    :param data: The data that you want to extract the photo from
+    :type data: dict
+
+    :return: A dictionary with the following keys:
+        - status: True or False, depending on whether the tweet was successfully extracted
+        - type_name: "text"
+        - data: a dictionary with the following keys:
+            - tweet_text: the text of the tweet
+            - created_at: the date of tweet created (UTC time)
+            - tweet_url: the url of the tweet
+            - owner_username: the username of the user who posted the tweet
+            - owner_name: the name of the user who posted the tweet
+    """
+    type_name = "text"
+    tweet_id_str = data.get("id_str")
+    created_at = data.get("created_at")
+    owner_username = data.get("user").get("screen_name")
+    owner_name = data.get("user").get("name")
+
+    tweet_text = data.get("text")
+    entities = data.get("entities")
+    tweet_text = edit_tweet_text(tweet_text, entities)
+
+    tweet_url = f"https://twitter.com/{owner_username}/status/{tweet_id_str}"
+    return {
+        "status": True,
+        "type_name": type_name,
+        "data": {
+            "tweet_text": tweet_text,
+            "tweet_url": tweet_url,
+            "created_at": created_at,
+            "owner_username": owner_username,
+            "owner_name": owner_name,
+        }
+    }
 
 
 def extract_video(data: dict) -> dict:
@@ -39,8 +79,7 @@ def extract_video(data: dict) -> dict:
 
 
 def extract_photos(data: dict) -> dict:
-    photos = data.get("photos")
-    type_name = "album"
+    pass
 
 
 def extract_photo(data: dict) -> dict:
@@ -55,6 +94,7 @@ def extract_photo(data: dict) -> dict:
         - type_name: "photo"
         - data: a dictionary with the following keys:
             - tweet_text: the text of the tweet
+            - created_at: the date of tweet created (UTC time)
             - tweet_url: the url of the tweet
             - photo_url: the url of the photo
             - owner_username: the username of the user who posted the tweet
@@ -67,6 +107,7 @@ def extract_photo(data: dict) -> dict:
     photo_url = photos[0].get("url") + "?name=large"
 
     tweet_id_str = data.get("id_str")
+    created_at = data.get("created_at")
     owner_username = data.get("user").get("screen_name")
     owner_name = data.get("user").get("name")
 
@@ -80,6 +121,7 @@ def extract_photo(data: dict) -> dict:
         "type_name": type_name,
         "data": {
             "tweet_text": tweet_text,
+            "created_at": created_at,
             "tweet_url": tweet_url,
             "photo_url": photo_url,
             "owner_username": owner_username,
