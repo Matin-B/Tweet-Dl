@@ -33,9 +33,9 @@ def edit_tweet_text(tweet_text: str, entities: dict) -> str:
         return tweet_text
 
 
-def extract_text(data: dict) -> dict:
+def text_tweet_handler(data: dict) -> dict:
     """
-    Extract Tweet data
+    Handle text tweet
     
     :param data: The data that you want to extract the photo from
     :type data: dict
@@ -73,13 +73,13 @@ def extract_text(data: dict) -> dict:
     }
 
 
-def extract_video(data: dict) -> dict:
+def video_tweet_handler(data: dict) -> dict:
     type_name = "video"
 
 
-def extract_photos(data: dict) -> dict:
+def album_tweet_handler(data: dict) -> dict:
     """
-    Extract Tweet data
+    Handle tweets that contain multiple photos
     
     :param data: The data that you want to extract the photo from
     :type data: dict
@@ -129,9 +129,9 @@ def extract_photos(data: dict) -> dict:
     }
 
 
-def extract_photo(data: dict) -> dict:
+def photo_tweet_handler(data: dict) -> dict:
     """
-    Extract Tweet data
+    Handle tweets that contain a single photo
     
     :param data: The data that you want to extract the photo from
     :type data: dict
@@ -149,7 +149,7 @@ def extract_photo(data: dict) -> dict:
     """
     photos = data.get("photos")
     if len(photos) >= 1:
-        extract_photos(data)
+        return album_tweet_handler(data)
     photo_url = photos[0].get("url") + "?name=large"
 
     tweet_id_str = data.get("id_str")
@@ -176,7 +176,9 @@ def extract_photo(data: dict) -> dict:
     }
 
 
-def download(url):
+def download(url: str) -> dict:
+    if len(url) == 0:
+        raise ValueError("URL cannot be empty.")
     url = url.replace("www.", "")
     if "t.co/" in url:
         response = requests.get(url)
@@ -198,11 +200,11 @@ def download(url):
     if response.status_code == 200:
         data = response.json()
         if "video" in data:
-            return extract_video(data)
+            return video_tweet_handler(data)
         else:
             if "photos" in data:
-                return extract_photo(data)
-            return extract_text(data)
+                return photo_tweet_handler(data)
+            return text_tweet_handler(data)
     elif response.status_code == 404:
         return {
             "status": False,
