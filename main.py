@@ -74,7 +74,66 @@ def text_tweet_handler(data: dict) -> dict:
 
 
 def video_tweet_handler(data: dict) -> dict:
-    type_name = "video"
+    """
+    Handle tweets that contain a video
+    
+    :param data: The data that you want to extract the photo from
+    :type data: dict
+
+    :return: A dictionary with the following keys:
+        - status: True or False, depending on whether the tweet was successfully extracted
+        - type_name: "video"
+        - data: a dictionary with the following keys:
+            - tweet_text: the text of the tweet
+            - created_at: the date of tweet created (UTC time)
+            - tweet_url: the url of the tweet
+            - video_poster_url: the url of the video poster
+            - video_urls: a list of urls of the videos in the tweet (sorted by size)
+            - owner_username: the username of the user who posted the tweet
+            - owner_name: the name of the user who posted the tweet
+    """
+    video = data.get("video")
+    content_type = video["contentType"]
+    if content_type == "gif":
+        return gif_tweet_handler(data)
+    video_poster_url = video.get("poster") + "?name=large"
+    video_variants = video.get("variants")
+    count = 0
+    for item in video_variants:
+        if item['type'] == 'application/x-mpegURL':
+            video_variants.pop(count)
+        count += 1
+    
+    video_urls = {}
+    for item in video_variants:
+        video_url = item.get("src")
+        video_quality = video_url.split("/vid/")[-1].split("/")[0]
+        video_urls[video_quality] = video_url
+    video_urls = dict(sorted(video_urls.items()))
+    
+    tweet_id_str = data.get("id_str")
+    created_at = data.get("created_at")
+    owner_username = data.get("user").get("screen_name")
+    owner_name = data.get("user").get("name")
+
+    tweet_text = data.get("text")
+    entities = data.get("entities")
+    tweet_text = edit_tweet_text(tweet_text, entities)
+
+    tweet_url = f"https://twitter.com/{owner_username}/status/{tweet_id_str}"
+    return {
+        "status": True,
+        "type_name": "album",
+        "data": {
+            "tweet_text": tweet_text,
+            "created_at": created_at,
+            "tweet_url": tweet_url,
+            "video_poster_url": video_poster_url,
+            "video_urls": video_urls,
+            "owner_username": owner_username,
+            "owner_name": owner_name,
+        }
+    }
 
 
 def album_tweet_handler(data: dict) -> dict:
