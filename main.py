@@ -87,7 +87,7 @@ def gif_tweet_handler(data: dict) -> dict:
             - tweet_text: the text of the tweet
             - created_at: the date of tweet created (UTC time)
             - tweet_url: the url of the tweet
-            - video_url: the url of the video
+            - gif_url: the url of the gif
             - owner_username: the username of the user who posted the tweet
             - owner_name: the name of the user who posted the tweet
     """
@@ -155,7 +155,15 @@ def video_tweet_handler(data: dict) -> dict:
         video_url = item.get("src")
         video_quality = video_url.split("/vid/")[-1].split("/")[0]
         video_urls[video_quality] = video_url
-    video_urls = dict(sorted(video_urls.items()))
+    
+    # Sort the video urls by highest quality
+    video_urls = dict(
+        sorted(
+            video_urls.items(),
+            key=lambda x: int(x[0].split("x")[0]),
+            reverse=True,
+        )
+    )
     
     tweet_id_str = data.get("id_str")
     created_at = data.get("created_at")
