@@ -9,6 +9,36 @@ headers = {
 }
 
 
+def human_readable_filesize(num, suffix="B"):
+    """
+    Return a human readable filesize from bytes
+    Note: from StackOverflow(https://stackoverflow.com/a/1094933/11491901)
+    
+    :param num: The number to format
+    :param suffix: The suffix to use for the units, defaults to B (optional)
+    :return: the size of the file in a human readable format.
+    """
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f}Yi{suffix}"
+
+
+def check_content_size(url):
+    response = requests.head(url, allow_redirects=True)
+    content_size = int(response.headers['Content-Length'])
+    if content_size < 20971520:
+        return {
+            "status": True,
+            "size": human_readable_filesize(content_size)
+        }
+    return {
+        "status": False,
+        "size": human_readable_filesize(content_size)
+    }
+
+
 def edit_tweet_text(tweet_text: str, entities: dict) -> str:
     """
     Replace expended urls with their short version
